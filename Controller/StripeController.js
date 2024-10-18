@@ -6,7 +6,7 @@ import stripe from 'stripe';
 
 dotenv.config();
 
-const stripeInstance = stripe(process.env.REACT_STRIPE_API_KEY);
+const stripeInstance = stripe(process.env.REACT_STRIPE_API_KEY || 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);
 
 export const monthlySessionCheckout = async (req, res) => {
     const session = await stripeInstance.checkout.sessions.create({
