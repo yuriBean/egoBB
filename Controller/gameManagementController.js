@@ -63,23 +63,45 @@ export const getALLLandingPages = async (req, res) => {
 }
 
 export const getALLLandingPagesByOwner = async (req, res) => {
-    try {
-        const { owner } = req.params;
-        const data = await Game.find({ ownerId: owner });
-        let instaCount = 0, facebookCount = 0, googleMapsCount = 0, twitterCount = 0, totalClicks = 0;
-        data.forEach(element => {
-            instaCount += element.instagramClicks;
-            facebookCount += element.facebookClicks;
-            googleMapsCount += element.googleMapsClicks;
-            twitterCount += element.twitterClicks;
-            totalClicks += element.visitedMembers;
-        })
-        res.status(200).json({ instaCount, facebookCount, googleMapsCount, twitterCount, totalClicks });
-    } catch (err) {
-        res.status(400).json(err);
-    }
-}
+  try {
+    const { owner } = req.params;
+    const data = await Game.find({ ownerId: owner });
+    let instaCount = 0,
+      facebookCount = 0,
+      googleMapsCount = 0,
+      twitterCount = 0,
+      totalClicks = 0;
 
+    data.forEach((element) => {
+      instaCount += element.instagramClicks;
+      facebookCount += element.facebookClicks;
+      googleMapsCount += element.googleMapsClicks;
+      twitterCount += element.twitterClicks;
+      totalClicks += element.visitedMembers;
+    });
+
+    // Calculate percentages
+    const instaPercentage =
+      totalClicks > 0 ? (instaCount / totalClicks) * 100 : 0;
+    const facebookPercentage =
+      totalClicks > 0 ? (facebookCount / totalClicks) * 100 : 0;
+    const googleMapsPercentage =
+      totalClicks > 0 ? (googleMapsCount / totalClicks) * 100 : 0;
+    const twitterPercentage =
+      totalClicks > 0 ? (twitterCount / totalClicks) * 100 : 0;
+
+    res.status(200).json({
+      instaPercentage,
+      facebookPercentage,
+      googleMapsPercentage,
+      twitterPercentage,
+      totalClicks,
+    });
+  } catch (err) {
+    res.status(400).json(err);
+  }
+};
+  
 export const getSingleLandingPages = async (req, res) => {
     try {
         const { pageId } = req.query;

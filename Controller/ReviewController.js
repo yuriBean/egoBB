@@ -1,14 +1,49 @@
 import ReviewModel from "../Models/ReviewsModel.js";
 import Spin from "../Models/spunUser.js";
+import { subDays } from "date-fns";
+import mongoose from "mongoose";
 
 export const getReviews = async (req, res) => {
-    try {
-        const data = await ReviewModel.find({ownerId: req.params.id});
-        res.status(200).json(data);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-}
+  const { userId } = req.params;
+  const days = parseInt(req.query.days, 10) || 10; // Default to 10 days if not provided
+
+  try {
+    // Get the date range for the specified number of days
+    const startDate = subDays(new Date(), days);
+
+    // Get reviews for the user from the specified date range
+    const reviews = await ReviewModel.aggregate([
+      {
+        $match: {
+          ownerId: new mongoose.Types.ObjectId(userId),
+          reviewDate: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$reviewDate" } },
+          totalReviews: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    // Prepare the data for the graph
+    const labels = reviews.map((review) => review._id);
+    const values = reviews.map((review) => review.totalReviews);
+
+    res.json({
+      labels, // Date labels for the graph
+      values, // Total reviews count per day
+    });
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 
 export const postReview = async (req, res) => {
     try {
