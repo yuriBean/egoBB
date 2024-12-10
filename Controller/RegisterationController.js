@@ -387,3 +387,53 @@ export const getAdminDashboardData = async (req, res) => {
         })
     }
 }
+
+
+export const UpdatePagesByAdmin = async (req, res) => {
+  const { pages } = req.body;
+  const { id } = req.params;
+
+  try {
+    // Update the landingPages for the specific user
+    await Registration.findByIdAndUpdate(id, { landingPages: pages });
+
+    // Fetch all users excluding the admin email
+    const users = await Registration.find({
+      email: { $ne: "admin@gmail.com" },
+    });
+
+    // Map over users and fetch associated games
+    const data = await Promise.all(
+      users.map(async (item) => {
+        const games = await Game.find({ ownerId: item._id });
+
+        // Ensure that item is a plain object before spreading
+        const itemObj = item.toObject();
+
+        return {
+          ...itemObj,
+          pages: games.length, // Adding the number of games as "pages"
+          access: games.some((game) => game.isTrial)
+            ? "Trial"
+            : item.accountType === "main"
+            ? "Propriétaire"
+            : "Sous",
+        };
+      })
+    );
+
+    // Return the updated user data
+    return res.status(200).json({
+      message: "Pages updated successfully",
+      data, // Send all users' data after the update
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error updating pages",
+      error,
+    });
+  }
+};
+  
+  
+  
